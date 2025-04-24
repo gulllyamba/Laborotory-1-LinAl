@@ -54,18 +54,18 @@ public:
 
 private:
     struct Face {
-        std::vector<int> indices; // Индексы точек грани
-        double zDepth; // Средняя Z-координата для сортировки
+        std::vector<int> indices;
+        double zDepth;
     };
 
     struct AxisSegment {
         Point3D start;
         Point3D end;
-        double zDepth; // Средняя Z-координата для сортировки
-        char label; // Метка оси (X, Y, Z)
-        Point3D originalStart; // Исходные координаты
+        double zDepth;
+        char label;
+        Point3D originalStart;
         Point3D originalEnd;
-        bool isAxis; // Флаг, указывающий, является ли это сегментом оси
+        bool isAxis;
     };
     std::vector<Point3D> points;
     std::vector<Face> faces;

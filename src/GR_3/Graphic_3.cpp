@@ -11,7 +11,6 @@ void Graphic_3::GenerateGraphic_3() {
     faces.clear();
     axisSegments.clear();
 
-    // Генерация точек тора
     for (int i = 0; i <= uSteps; i++) {
         double u = (2 * PI * i) / uSteps;
         for (int j = 0; j <= vSteps; j++) {
@@ -24,7 +23,6 @@ void Graphic_3::GenerateGraphic_3() {
         }
     }
 
-    // Генерация граней (четырехугольники)
     for (int i = 0; i < uSteps; i++) {
         for (int j = 0; j < vSteps; j++) {
             Face face;
@@ -38,7 +36,6 @@ void Graphic_3::GenerateGraphic_3() {
         }
     }
 
-    // Генерация осей
     Point3D origin(0, 0, 0);
     axisSegments.push_back({origin, Point3D(7, 0, 0), 0, 'X', origin, Point3D(7, 0, 0)});
     axisSegments.push_back({origin, Point3D(0, 7, 0), 0, 'Y', origin, Point3D(0, 7, 0)});
@@ -100,16 +97,13 @@ bool Graphic_3::IsFaceVisible(const Point3D& p1, const Point3D& p2, const Point3
 }
 
 void Graphic_3::Draw(HDC hdc) {
-    // Подготовка повернутых точек
     std::vector<Point3D> rotatedPoints(points.size());
     for (size_t i = 0; i < points.size(); i++) {
         rotatedPoints[i] = RotatePoint(points[i]);
     }
 
-    // Повернем оси
     RotateAxes();
 
-    // Найдем минимальную и максимальную Z-координаты для эффекта тумана
     double minZ = std::numeric_limits<double>::max();
     double maxZ = std::numeric_limits<double>::min();
     for (const auto& point : rotatedPoints) {
@@ -124,7 +118,6 @@ void Graphic_3::Draw(HDC hdc) {
     }
     double zRange = maxZ - minZ;
 
-    // Обновление Z-глубины граней
     std::vector<std::pair<double, int>> renderOrder;
     for (size_t i = 0; i < faces.size(); i++) {
         double zSum = 0;
@@ -134,18 +127,15 @@ void Graphic_3::Draw(HDC hdc) {
         renderOrder.push_back({faces[i].zDepth, -(int)i});
     }
 
-    // Обновление Z-глубины осей
     for (size_t i = 0; i < axisSegments.size(); i++) {
         axisSegments[i].zDepth = (axisSegments[i].start.z + axisSegments[i].end.z) / 2.0;
         renderOrder.push_back({axisSegments[i].zDepth, (int)i});
     }
 
-    // Сортировка по глубине
     std::sort(renderOrder.begin(), renderOrder.end(), [](const auto& a, const auto& b) {
         return a.first > b.first;
     });
 
-    // Отрисовка
     HPEN facePen = CreatePen(PS_SOLID, 1, RGB(0, 0, 0));
     HPEN axisPen = CreatePen(PS_SOLID, 2, RGB(255, 0, 0));
     Point3D rotatedLightPos = RotatePoint(lightPos);
@@ -153,7 +143,7 @@ void Graphic_3::Draw(HDC hdc) {
 
     for (const auto& item : renderOrder) {
         int index = item.second;
-        if (index < 0) { // Отрисовка грани
+        if (index < 0) {
             index = -index;
             const auto& face = faces[index];
             Point3D p1 = rotatedPoints[face.indices[0]];
@@ -168,10 +158,8 @@ void Graphic_3::Draw(HDC hdc) {
             double lightIntensity = std::max(0.0, normal.x * rotatedLightPos.x +
                                                 normal.y * rotatedLightPos.y +
                                                 normal.z * rotatedLightPos.z);
-            // Увеличиваем минимальную яркость (было 0.2, стало 0.4) и диапазон освещения
             int baseColorValue = static_cast<int>((0.4 + 0.6 * lightIntensity) * 255);
 
-            // Эффект тумана: увеличиваем минимальную яркость (было 0.3, стало 0.5)
             double fogFactor = (face.zDepth - minZ) / zRange;
             fogFactor = 1.0 - fogFactor;
             int colorValue = static_cast<int>(baseColorValue * (0.5 + 0.5 * fogFactor));
@@ -187,7 +175,7 @@ void Graphic_3::Draw(HDC hdc) {
             Polygon(hdc, facePoints.data(), facePoints.size());
 
             DeleteObject(faceBrush);
-        } else { // Отрисовка оси
+        } else {
             const auto& axis = axisSegments[index];
             POINT start = Project(axis.start);
             POINT end = Project(axis.end);
